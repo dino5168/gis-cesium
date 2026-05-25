@@ -1,0 +1,28 @@
+{
+  "sidebar": {
+    "appName": "Report Automation",
+    "appSubtitle": "Powered by Dino",
+    "companyName": "Shifang Resource Technology",
+    "mainMenu": "Main Menu",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "user": "User",
+    "theme": "Theme",
+    "language": "Language",
+    "settings": "Settings",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeDarkBlue": "Dark Blue"
+  },
+  "nav": {
+    "chat": "AI Chatbot",
+    "dashboard": "Dashboard",
+    "overview": "Overview",
+    "stats": "Statistics"
+  },
+  "chat": {
+    "empty": "Start a conversation below.",
+    "placeholder": "Message… (Enter to send, Shift+Enter for newline)"
+  }
+}

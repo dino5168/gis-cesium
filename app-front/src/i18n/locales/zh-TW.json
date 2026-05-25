@@ -1,0 +1,28 @@
+{
+  "sidebar": {
+    "appName": "報告自動化",
+    "appSubtitle": "Powered by Dino",
+    "companyName": "十方資源科技",
+    "mainMenu": "主選單",
+    "expandSidebar": "展開側邊欄",
+    "collapseSidebar": "收合側邊欄",
+    "user": "用戶",
+    "theme": "主題",
+    "language": "語言",
+    "settings": "設定",
+    "themeSystem": "系統",
+    "themeLight": "淺色",
+    "themeDark": "深色",
+    "themeDarkBlue": "深藍色"
+  },
+  "nav": {
+    "chat": "AI 聊天機器人",
+    "dashboard": "儀表板",
+    "overview": "概覽",
+    "stats": "統計"
+  },
+  "chat": {
+    "empty": "在下方開始對話。",
+    "placeholder": "傳送訊息… (Enter 送出，Shift+Enter 換行)"
+  }
+}

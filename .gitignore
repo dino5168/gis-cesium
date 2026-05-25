@@ -1,0 +1,29 @@
+# Python
+app-backend/.venv/
+app-backend/__pycache__/
+app-backend/src/**/__pycache__/
+app-backend/src/**/*.pyc
+app-backend/.pytest_cache/
+app-backend/src/app_backend.egg-info/
+
+# Node
+app-front/node_modules/
+app-front/dist/
+app-front/dist-ssr/
+
+# Rust / Tauri build artifacts
+app-front/src-tauri/target/
+
+# Env
+.env
+**/.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.obsidian/
