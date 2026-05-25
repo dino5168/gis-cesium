@@ -17,6 +17,7 @@
   },
   "nav": {
     "chat": "AI 聊天機器人",
+    "docs": "說明文件",
     "dashboard": "儀表板",
     "overview": "概覽",
     "stats": "統計"

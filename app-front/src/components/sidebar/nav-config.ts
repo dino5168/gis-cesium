@@ -1,7 +1,7 @@
-import { MessageSquare,LayoutDashboard,LayoutGrid,PieChart } from "lucide-react";
+import { MessageSquare, LayoutDashboard, LayoutGrid, PieChart, BookOpen } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-export type NavItemKey = "chat";
+export type NavItemKey = "chat" | "docs";
 
 interface LeafNavItem {
   key: string;
@@ -33,6 +33,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "sidebar.mainMenu",
     items: [
       { key: "chat", label: "nav.chat", icon: MessageSquare },
+      { key: "docs", label: "nav.docs", icon: BookOpen },
       {
         key: "dashboard", label: "nav.dashboard", icon: LayoutDashboard,
         children: [

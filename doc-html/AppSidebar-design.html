@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AppSidebar 設計解析</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222636;
+      --border: #2d3147;
+      --accent: #5b6ef5;
+      --accent-dim: rgba(91,110,245,0.15);
+      --green: #4ade80;
+      --yellow: #facc15;
+      --red: #f87171;
+      --cyan: #22d3ee;
+      --purple: #c084fc;
+      --text: #e2e8f0;
+      --text-muted: #8892aa;
+      --code-bg: #12151e;
+      --radius: 8px;
+      --font-mono: "Fira Code", "Cascadia Code", "Consolas", monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      padding: 40px 24px 80px;
+    }
+
+    .page-wrap { max-width: 960px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .page-header {
+      border-left: 4px solid var(--accent);
+      padding: 0 0 0 20px;
+      margin-bottom: 48px;
+    }
+    .page-header .badge {
+      display: inline-block;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 2px 10px;
+      border-radius: 99px;
+      margin-bottom: 10px;
+    }
+    .page-header h1 { font-size: 28px; font-weight: 700; line-height: 1.2; }
+    .page-header .sub { color: var(--text-muted); margin-top: 6px; font-size: 14px; }
+    .page-header .filepath {
+      display: inline-block;
+      margin-top: 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--cyan);
+      background: var(--code-bg);
+      padding: 3px 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Section ── */
+    .section { margin-bottom: 52px; }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title .num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    /* ── Cards ── */
+    .card-grid { display: grid; gap: 16px; }
+    .card-grid.col2 { grid-template-columns: repeat(2, 1fr); }
+    .card-grid.col3 { grid-template-columns: repeat(3, 1fr); }
+
+    @media (max-width: 700px) {
+      .card-grid.col2,
+      .card-grid.col3 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 12px;
+    }
+    .card-title.green  { color: var(--green);  }
+    .card-title.yellow { color: var(--yellow); }
+    .card-title.cyan   { color: var(--cyan);   }
+    .card-title.purple { color: var(--purple); }
+    .card-title.accent { color: var(--accent); }
+    .card-title.red    { color: var(--red);    }
+
+    /* ── Prop table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th {
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--accent-dim); }
+    code {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      background: var(--code-bg);
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: var(--cyan);
+    }
+
+    /* ── State table ── */
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 8px;
+      border-radius: 99px;
+    }
+    .tag.boolean { background: rgba(74,222,128,.15); color: var(--green); }
+    .tag.set     { background: rgba(192,132,252,.15); color: var(--purple); }
+    .tag.string  { background: rgba(34,211,238,.15);  color: var(--cyan); }
+    .tag.enum    { background: rgba(250,204,21,.15);   color: var(--yellow); }
+
+    /* ── Code block ── */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.65;
+      margin-top: 12px;
+    }
+    pre .kw  { color: #c084fc; }
+    pre .fn  { color: #60a5fa; }
+    pre .str { color: #86efac; }
+    pre .cmt { color: #4b5563; font-style: italic; }
+    pre .type{ color: #facc15; }
+    pre .op  { color: #94a3b8; }
+
+    /* ── Flow diagram ── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 4px;
+    }
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .flow-step:last-child { border-bottom: none; }
+    .flow-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .flow-dot.a { background: rgba(91,110,245,.25); color: var(--accent); }
+    .flow-dot.b { background: rgba(74,222,128,.2);  color: var(--green); }
+    .flow-dot.c { background: rgba(250,204,21,.2);  color: var(--yellow); }
+    .flow-dot.d { background: rgba(248,113,113,.2); color: var(--red); }
+    .flow-body { flex: 1; }
+    .flow-label { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+    .flow-desc  { font-size: 13px; color: var(--text-muted); }
+
+    /* ── Layout diagram ── */
+    .layout-diagram {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.9;
+    }
+    .ld-block {
+      border: 1px dashed;
+      padding: 6px 12px;
+      border-radius: 6px;
+      margin: 4px 0;
+    }
+    .ld-block.header { border-color: var(--cyan);   color: var(--cyan); }
+    .ld-block.nav    { border-color: var(--green);  color: var(--green); }
+    .ld-block.footer { border-color: var(--yellow); color: var(--yellow); }
+    .ld-block.popup  { border-color: var(--purple); color: var(--purple); }
+    .ld-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+
+    /* ── Hook box ── */
+    .hook-box {
+      background: var(--surface2);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 16px;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .hook-box strong { color: var(--accent); }
+
+    /* ── Data type tree ── */
+    .tree { font-family: var(--font-mono); font-size: 13px; line-height: 1.9; }
+    .tree .t-key   { color: var(--cyan); }
+    .tree .t-type  { color: var(--yellow); }
+    .tree .t-val   { color: var(--green); }
+    .tree .t-cmt   { color: #4b5563; font-style: italic; }
+
+    /* ── Interaction matrix ── */
+    .matrix { font-size: 13px; }
+    .matrix td:first-child { color: var(--cyan); font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+
+    /* ── Scroll hint ── */
+    .scroll-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+
+    /* ── Divider ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="badge">Component Design Doc</div>
+    <h1>AppSidebar — 設計機制解析</h1>
+    <p class="sub">Tauri v2 · React 19 · TypeScript strict · Tailwind v4</p>
+    <span class="filepath">src/components/sidebar/AppSidebar.tsx</span>
+  </div>
+
+  <!-- 1. Props Interface -->
+  <div class="section">
+    <div class="section-title"><span class="num">1</span> Props Interface</div>
+    <div class="card">
+      <div class="scroll-hint">interface AppSidebarProps</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Prop</th><th>Type</th><th>Required</th><th>說明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>className</code></td>
+            <td><code>string</code></td>
+            <td>—</td>
+            <td>外部追加 Tailwind class，透過 <code>cn()</code> 合併</td>
+          </tr>
+          <tr>
+            <td><code>activeItem</code></td>
+            <td><code>NavItemKey</code></td>
+            <td>✓</td>
+            <td>目前高亮的導覽項目 key，由父層 <code>App.tsx</code> 控制</td>
+          </tr>
+          <tr>
+            <td><code>onActiveChange</code></td>
+            <td><code>(key: NavItemKey) =&gt; void</code></td>
+            <td>✓</td>
+            <td>點擊導覽項目時回呼父層以切換頁面</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="hook-box">
+      <strong>設計決策：</strong> Props 全部標記 <code>readonly</code> — 強制單向資料流，sidebar 本身只管 UI 狀態，頁面路由狀態提升至 App 層。
+    </div>
+  </div>
+
+  <!-- 2. State Map -->
+  <div class="section">
+    <div class="section-title"><span class="num">2</span> 內部狀態一覽</div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>State</th><th>型別</th><th>初始值</th><th>職責</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>collapsed</code></td>
+            <td><span class="tag boolean">boolean</span></td>
+            <td><code>false</code></td>
+            <td>側邊欄收合／展開（<code>w-16</code> ↔ <code>w-60</code>）</td>
+          </tr>
+          <tr>
+            <td><code>expandedItems</code></td>
+            <td><span class="tag set">Set&lt;NavItemKey&gt;</span></td>
+            <td><code>new Set()</code></td>
+            <td>紀錄哪些 Parent 項目已展開子選單</td>
+          </tr>
+          <tr>
+            <td><code>settingsOpen</code></td>
+            <td><span class="tag boolean">boolean</span></td>
+            <td><code>false</code></td>
+            <td>Footer 設定彈出面板開關</td>
+          </tr>
+          <tr>
+            <td><code>theme</code></td>
+            <td><span class="tag enum">Theme</span></td>
+            <td><code>"system"</code></td>
+            <td>當前主題：<code>system | light | dark | dark-blue</code></td>
+          </tr>
+          <tr>
+            <td><code>themeExpanded</code></td>
+            <td><span class="tag boolean">boolean</span></td>
+            <td><code>false</code></td>
+            <td>設定面板內「主題」子選單展開狀態</td>
+          </tr>
+          <tr>
+            <td><code>langExpanded</code></td>
+            <td><span class="tag boolean">boolean</span></td>
+            <td><code>false</code></td>
+            <td>設定面板內「語言」子選單展開狀態</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 3. DOM Layout -->
+  <div class="section">
+    <div class="section-title"><span class="num">3</span> DOM 結構與佈局</div>
+    <div class="layout-diagram">
+      <div class="ld-label" style="color:var(--text-muted);margin-bottom:8px;">&lt;aside&gt; flex-col · w-16 or w-60 · transition-all</div>
+
+      <div class="ld-block header">
+        <div class="ld-label">Header (shrink-0)</div>
+        Logo 十方 + AppName + AppSubtitle | Menu toggle button
+      </div>
+
+      <div class="ld-block nav">
+        <div class="ld-label">Nav (flex-1 · overflow-y-auto)</div>
+        NAV_SECTIONS.map → Section divider + label
+        &nbsp;&nbsp;└─ items.map → Leaf button | Parent button + [children indent]
+      </div>
+
+      <div class="ld-block footer" style="position:relative">
+        <div class="ld-label">Footer (shrink-0 · border-t)</div>
+        <div class="ld-block popup" style="margin-top:6px">
+          <div class="ld-label">Settings Popup (absolute · z-50)</div>
+          Theme accordion row → theme options
+          Lang accordion row → lang options
+          ─── divider ───
+          Settings link row
+        </div>
+        Footer bar: User avatar + name | Settings gear button
+      </div>
+    </div>
+    <div class="hook-box" style="margin-top:16px">
+      <strong>Popup 定位策略：</strong>
+      collapsed 時 → <code>left-full ml-2 w-56</code>（右側浮出）；
+      展開時 → <code>bottom-full left-0 right-0 mx-2 mb-1</code>（向上展開填滿寬度）。
+    </div>
+  </div>
+
+  <!-- 4. Navigation Data Model -->
+  <div class="section">
+    <div class="section-title"><span class="num">4</span> 導覽資料模型（nav-config.ts）</div>
+    <div class="card-grid col2">
+      <div class="card">
+        <div class="card-title cyan">Type Hierarchy</div>
+        <div class="tree">
+          <div><span class="t-type">NavItemKey</span> = <span class="t-val">"chat"</span> <span class="t-cmt">// union 擴充此處</span></div>
+          <div>&nbsp;</div>
+          <div><span class="t-key">LeafNavItem</span> &#123;</div>
+          <div>&nbsp;&nbsp;key<span class="t-type">: string</span></div>
+          <div>&nbsp;&nbsp;label<span class="t-type">: string</span> <span class="t-cmt">// i18n key</span></div>
+          <div>&nbsp;&nbsp;icon<span class="t-type">: LucideIcon</span></div>
+          <div>&nbsp;&nbsp;children<span class="t-type">?: never</span> <span class="t-cmt">// 判別聯合用</span></div>
+          <div>&#125;</div>
+          <div>&nbsp;</div>
+          <div><span class="t-key">ParentNavItem</span> &#123;</div>
+          <div>&nbsp;&nbsp;key, label, icon</div>
+          <div>&nbsp;&nbsp;children<span class="t-type">: LeafNavItem[]</span></div>
+          <div>&#125;</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title yellow">Type Guard</div>
+        <pre><span class="kw">export function</span> <span class="fn">isParentNavItem</span>(
+  item: <span class="type">NavItem</span>
+): item <span class="kw">is</span> <span class="type">ParentNavItem</span> {
+  <span class="kw">return</span> Array.<span class="fn">isArray</span>(item.children);
+}
+
+<span class="cmt">// 使用點（AppSidebar.tsx）</span>
+<span class="kw">const</span> isParent = <span class="fn">isParentNavItem</span>(item);
+<span class="kw">if</span> (isParent &amp;&amp; !collapsed)
+  <span class="fn">toggleExpand</span>(item.key)</pre>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:10px;">
+          利用 <code>children?: never</code> 與 <code>children: LeafNavItem[]</code> 構成<strong>判別聯合（discriminated union）</strong>，type narrowing 零運行時成本。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Theme Mechanism -->
+  <div class="section">
+    <div class="section-title"><span class="num">5</span> 主題切換機制</div>
+    <div class="card-grid col2">
+      <div class="card">
+        <div class="card-title green">useLayoutEffect — DOM class 操作</div>
+        <pre><span class="fn">useLayoutEffect</span>(() => &#123;
+  <span class="kw">const</span> root = document.documentElement;
+  root.classList.<span class="fn">remove</span>(<span class="str">"dark"</span>, <span class="str">"dark-blue"</span>);
+
+  <span class="kw">if</span> (theme === <span class="str">"dark"</span>)
+    root.classList.<span class="fn">add</span>(<span class="str">"dark"</span>);
+  <span class="kw">else if</span> (theme === <span class="str">"dark-blue"</span>)
+    root.classList.<span class="fn">add</span>(<span class="str">"dark-blue"</span>);
+  <span class="kw">else if</span> (theme === <span class="str">"system"</span>) &#123;
+    <span class="kw">const</span> prefersDark = window
+      .<span class="fn">matchMedia</span>(<span class="str">"(prefers-color-scheme: dark)"</span>)
+      .matches;
+    <span class="kw">if</span> (prefersDark) root.classList.<span class="fn">add</span>(<span class="str">"dark"</span>);
+  &#125;
+&#125;, [theme]);</pre>
+      </div>
+      <div class="card">
+        <div class="card-title purple">四種 Theme 選項</div>
+        <table>
+          <thead><tr><th>Value</th><th>Icon</th><th>行為</th></tr></thead>
+          <tbody>
+            <tr><td><code>system</code></td><td>Monitor</td><td>讀取 OS 偏好，自動套用 <code>.dark</code></td></tr>
+            <tr><td><code>light</code></td><td>Sun</td><td>移除所有 dark class</td></tr>
+            <tr><td><code>dark</code></td><td>Moon</td><td>加上 <code>.dark</code></td></tr>
+            <tr><td><code>dark-blue</code></td><td>Waves</td><td>加上 <code>.dark-blue</code></td></tr>
+          </tbody>
+        </table>
+        <div class="hook-box" style="margin-top:12px">
+          <strong>為什麼用 useLayoutEffect？</strong><br>
+          在瀏覽器繪製前同步更新 class，避免 light → dark 的閃爍（FOUC）。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Click-outside Close -->
+  <div class="section">
+    <div class="section-title"><span class="num">6</span> 設定面板 Click-outside 關閉</div>
+    <div class="card">
+      <div class="card-title accent">useEffect + mousedown 事件委派</div>
+      <pre><span class="fn">useEffect</span>(() => &#123;
+  <span class="kw">if</span> (!settingsOpen) <span class="kw">return</span>; <span class="cmt">// early exit — 未開啟時不掛事件</span>
+
+  <span class="kw">const</span> handler = (e: <span class="type">MouseEvent</span>) => &#123;
+    <span class="kw">if</span> (settingsRef.current &amp;&amp;
+        !settingsRef.current.<span class="fn">contains</span>(e.target <span class="kw">as</span> <span class="type">Node</span>)) &#123;
+      <span class="fn">setSettingsOpen</span>(<span class="kw">false</span>);
+      <span class="fn">setThemeExpanded</span>(<span class="kw">false</span>);
+      <span class="fn">setLangExpanded</span>(<span class="kw">false</span>);
+    &#125;
+  &#125;;
+
+  document.<span class="fn">addEventListener</span>(<span class="str">"mousedown"</span>, handler);
+  <span class="kw">return</span> () => document.<span class="fn">removeEventListener</span>(<span class="str">"mousedown"</span>, handler);
+&#125;, [settingsOpen]);</pre>
+    </div>
+    <div class="card-grid col2" style="margin-top:16px">
+      <div class="card">
+        <div class="card-title green">關鍵細節</div>
+        <ul style="font-size:13px;color:var(--text-muted);padding-left:16px;line-height:2;">
+          <li><code>settingsRef</code> 包裹整個 Footer div（含 popup + footer bar），<code>contains()</code> 判斷點擊是否在內部</li>
+          <li>只在 <code>settingsOpen === true</code> 時才掛 listener，避免每次 render 多餘的全域事件</li>
+          <li>cleanup 函數確保 unmount 或狀態變更時移除 listener，防止記憶體洩漏</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title yellow">closePopup 輔助函式</div>
+        <pre><span class="kw">const</span> <span class="fn">closePopup</span> = () => &#123;
+  <span class="fn">setSettingsOpen</span>(<span class="kw">false</span>);
+  <span class="fn">setThemeExpanded</span>(<span class="kw">false</span>);
+  <span class="fn">setLangExpanded</span>(<span class="kw">false</span>);
+&#125;;</pre>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:8px;">
+          選擇主題 / 語言後呼叫，同步重置三個狀態，避免下次開啟時殘留展開狀態。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Collapse / Expand Logic -->
+  <div class="section">
+    <div class="section-title"><span class="num">7</span> 收合與導覽展開邏輯</div>
+    <div class="card-grid col2">
+      <div class="card">
+        <div class="card-title cyan">Sidebar 收合</div>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="flow-dot a">1</div>
+            <div class="flow-body">
+              <div class="flow-label">點擊 Menu icon</div>
+              <div class="flow-desc"><code>setCollapsed(v => !v)</code> toggle</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot b">2</div>
+            <div class="flow-body">
+              <div class="flow-label">寬度 CSS transition</div>
+              <div class="flow-desc"><code>w-16</code>（collapsed）↔ <code>w-60</code>，duration-300 動畫</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot c">3</div>
+            <div class="flow-body">
+              <div class="flow-label">內容條件渲染</div>
+              <div class="flow-desc">Logo、文字、分區標題、子選單、User name 全部以 <code>!collapsed &&</code> 隱藏</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot d">4</div>
+            <div class="flow-body">
+              <div class="flow-label">按鈕居中修正</div>
+              <div class="flow-desc">Menu / Settings button 加 <code>collapsed && "mx-auto"</code> 維持視覺對齊</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title purple">子選單展開（toggleExpand）</div>
+        <pre><span class="kw">const</span> <span class="fn">toggleExpand</span> = (key: <span class="type">NavItemKey</span>) => &#123;
+  <span class="fn">setExpandedItems</span>((prev) => &#123;
+    <span class="kw">const</span> next = <span class="kw">new</span> <span class="type">Set</span>(prev);
+    next.<span class="fn">has</span>(key)
+      ? next.<span class="fn">delete</span>(key)
+      : next.<span class="fn">add</span>(key);
+    <span class="kw">return</span> next;
+  &#125;);
+&#125;;</pre>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:10px;">
+          Set 支援同時展開多個 Parent 項目。
+          收合側邊欄時子選單<strong>不會</strong>重置（Set 保留），展開後子選單位置自動顯示。
+        </p>
+        <div class="hook-box" style="margin-top:10px">
+          <strong>Guard：</strong> 只有 <code>isParent &amp;&amp; !collapsed</code> 才觸發 toggleExpand；
+          collapsed 狀態點擊 Parent 只切換 activeItem，不試圖展開。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. i18n -->
+  <div class="section">
+    <div class="section-title"><span class="num">8</span> 國際化（i18n）整合</div>
+    <div class="card-grid col2">
+      <div class="card">
+        <div class="card-title green">使用方式</div>
+        <pre><span class="kw">const</span> &#123; t, i18n &#125; = <span class="fn">useTranslation</span>();
+
+<span class="cmt">// 靜態翻譯</span>
+t(<span class="str">"sidebar.appName"</span>)
+t(<span class="str">"sidebar.theme"</span>)
+t(item.label) <span class="cmt">// nav-config 存 i18n key</span>
+
+<span class="cmt">// 切換語言</span>
+<span class="kw">void</span> i18n.<span class="fn">changeLanguage</span>(opt.value)
+
+<span class="cmt">// 讀取當前語言</span>
+<span class="kw">const</span> currentLang = i18n.language <span class="kw">as</span> <span class="type">Language</span></pre>
+      </div>
+      <div class="card">
+        <div class="card-title yellow">語言選項</div>
+        <table>
+          <thead><tr><th>Value</th><th>顯示名稱</th></tr></thead>
+          <tbody>
+            <tr><td><code>zh-TW</code></td><td>繁體中文</td></tr>
+            <tr><td><code>en</code></td><td>English</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:12px;">
+          語言名稱硬編碼（非 i18n key），避免自身翻譯 key 的雞生蛋問題。<br>
+          <code>void</code> 前綴處理 <code>changeLanguage</code> 回傳的 Promise，符合 ESLint <code>@typescript-eslint/no-floating-promises</code>。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Interaction Matrix -->
+  <div class="section">
+    <div class="section-title"><span class="num">9</span> 互動行為矩陣</div>
+    <div class="card">
+      <table class="matrix">
+        <thead>
+          <tr><th>觸發點</th><th>條件</th><th>狀態變更</th><th>副作用</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Menu button</code></td>
+            <td>—</td>
+            <td><code>collapsed</code> toggle</td>
+            <td>CSS width transition</td>
+          </tr>
+          <tr>
+            <td><code>Leaf nav item</code></td>
+            <td>—</td>
+            <td><code>onActiveChange(key)</code></td>
+            <td>父層切換頁面</td>
+          </tr>
+          <tr>
+            <td><code>Parent nav item</code></td>
+            <td><code>!collapsed</code></td>
+            <td><code>expandedItems</code> toggle + <code>onActiveChange</code></td>
+            <td>子選單展開/收合</td>
+          </tr>
+          <tr>
+            <td><code>Parent nav item</code></td>
+            <td><code>collapsed</code></td>
+            <td><code>onActiveChange</code> only</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><code>Settings gear</code></td>
+            <td>—</td>
+            <td><code>settingsOpen</code> toggle</td>
+            <td>popup 出現</td>
+          </tr>
+          <tr>
+            <td><code>Theme row</code></td>
+            <td><code>settingsOpen</code></td>
+            <td><code>themeExpanded</code> toggle；<code>langExpanded=false</code></td>
+            <td>手風琴互斥</td>
+          </tr>
+          <tr>
+            <td><code>Theme option</code></td>
+            <td><code>themeExpanded</code></td>
+            <td><code>theme</code> 更新；<code>closePopup()</code></td>
+            <td><code>useLayoutEffect</code> 同步更新 DOM class</td>
+          </tr>
+          <tr>
+            <td><code>Lang row</code></td>
+            <td><code>settingsOpen</code></td>
+            <td><code>langExpanded</code> toggle；<code>themeExpanded=false</code></td>
+            <td>手風琴互斥</td>
+          </tr>
+          <tr>
+            <td><code>Lang option</code></td>
+            <td><code>langExpanded</code></td>
+            <td><code>i18n.changeLanguage()</code>；<code>closePopup()</code></td>
+            <td>全局重新翻譯</td>
+          </tr>
+          <tr>
+            <td><code>Click outside footer</code></td>
+            <td><code>settingsOpen</code></td>
+            <td><code>settingsOpen=false</code>；sub-states reset</td>
+            <td>document mousedown listener 觸發</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 10. Styling Conventions -->
+  <div class="section">
+    <div class="section-title"><span class="num">10</span> 樣式慣例</div>
+    <div class="card-grid col3">
+      <div class="card">
+        <div class="card-title cyan">cn() 條件合併</div>
+        <pre style="font-size:12px;"><span class="fn">cn</span>(
+  <span class="str">"base-classes"</span>,
+  condition &amp;&amp; <span class="str">"extra"</span>,
+  collapsed &amp;&amp; <span class="str">"mx-auto"</span>,
+)</pre>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">clsx + tailwind-merge 確保 class 衝突自動解決</p>
+      </div>
+      <div class="card">
+        <div class="card-title yellow">Sidebar CSS tokens</div>
+        <ul style="font-size:12px;color:var(--text-muted);padding-left:14px;line-height:2.1;">
+          <li><code>bg-sidebar</code></li>
+          <li><code>text-sidebar-foreground</code></li>
+          <li><code>border-sidebar-border</code></li>
+          <li><code>bg-sidebar-accent</code></li>
+          <li><code>bg-sidebar-primary</code></li>
+          <li><code>text-sidebar-primary-foreground</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title purple">Active state pattern</div>
+        <pre style="font-size:12px;">isActive
+  ? <span class="str">"bg-sidebar-accent
+     text-sidebar-accent-foreground
+     font-medium"</span>
+  : <span class="str">"text-sidebar-foreground/70
+     hover:bg-sidebar-accent/50
+     hover:text-sidebar-foreground"</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. Extension Guide -->
+  <div class="section">
+    <div class="section-title"><span class="num">11</span> 擴充指南</div>
+    <div class="card-grid col2">
+      <div class="card">
+        <div class="card-title green">新增頁面（4 步驟）</div>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="flow-dot a">1</div>
+            <div class="flow-body">
+              <div class="flow-label">建立頁面元件</div>
+              <div class="flow-desc"><code>src/pages/MyPage.tsx</code></div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot b">2</div>
+            <div class="flow-body">
+              <div class="flow-label">擴充 NavItemKey</div>
+              <div class="flow-desc"><code>nav-config.ts</code> → <code>type NavItemKey = "chat" | "my-page"</code></div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot c">3</div>
+            <div class="flow-body">
+              <div class="flow-label">加入 NAV_SECTIONS</div>
+              <div class="flow-desc">在對應 section 的 <code>items[]</code> 加入 LeafNavItem 或 ParentNavItem</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot d">4</div>
+            <div class="flow-body">
+              <div class="flow-label">更新 App.tsx PAGES</div>
+              <div class="flow-desc"><code>my-page: &lt;MyPage /&gt;</code></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title red">新增主題</div>
+        <ol style="font-size:13px;color:var(--text-muted);padding-left:16px;line-height:2.2;">
+          <li>在 <code>index.css</code> 定義 <code>.my-theme</code> CSS 變數</li>
+          <li>擴充 <code>type Theme</code> 聯合型別</li>
+          <li>在 <code>useLayoutEffect</code> 加入對應 <code>classList.add("my-theme")</code> 分支，並確保 <code>remove()</code> 列表包含新 class</li>
+          <li>在 <code>THEME_OPTIONS</code> 陣列加入選項</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+  <p style="font-size:12px;color:var(--text-muted);text-align:center;">
+    Generated · AppSidebar.tsx · pro-gis · 2026-05-25
+  </p>
+
+</div>
+</body>
+</html>

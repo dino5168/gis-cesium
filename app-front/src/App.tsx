@@ -3,11 +3,14 @@ import { useTranslation } from "react-i18next";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Bot, Minus, Maximize2, Minimize2, X } from "lucide-react";
 import { AppSidebar } from "@/components/sidebar/AppSidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import AiChat from "@/pages/AiChat";
+import DocPage from "@/pages/DocPage";
 import type { NavItemKey } from "@/components/sidebar/nav-config";
 
 const PAGES: Record<NavItemKey, React.ReactNode> = {
   chat: <AiChat />,
+  docs: <DocPage bookPath="Claude-Code-使用手冊" />,
 };
 
 export default function App() {
@@ -25,6 +28,7 @@ export default function App() {
   }, []);
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Title bar */}
       <header
@@ -72,5 +76,6 @@ export default function App() {
         </main>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

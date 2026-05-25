@@ -2,8 +2,25 @@ import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Menu, ChevronRight, ChevronDown, Settings, User, Sun, Monitor, Moon, Waves, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NAV_SECTIONS, isParentNavItem } from "./nav-config";
 import type { NavItemKey } from "./nav-config";
+
+function SidebarTooltip({ label, show, children }: {
+  label: string;
+  show: boolean;
+  children: React.ReactElement;
+}) {
+  if (!show) return children;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="right" sideOffset={8}>
+        <p>{label}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 type Theme = "system" | "light" | "dark" | "dark-blue";
 type Language = "zh-TW" | "en";
@@ -19,9 +36,10 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<NavItemKey>>(new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [theme, setTheme] = useState<Theme>("system");
-  const [themeExpanded, setThemeExpanded] = useState(false);
-  const [langExpanded, setLangExpanded] = useState(false);
+  const [theme, setTheme] = useState<Theme>(
+    () => (localStorage.getItem("theme") as Theme) ?? "system",
+  );
+  const [activeAccordion, setActiveAccordion] = useState<"theme" | "lang" | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
 
   const toggleExpand = (key: NavItemKey) => {
@@ -34,14 +52,22 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
 
   useLayoutEffect(() => {
     const root = document.documentElement;
-    root.classList.remove("dark", "dark-blue");
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else if (theme === "dark-blue") {
-      root.classList.add("dark-blue");
-    } else if (theme === "system") {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) root.classList.add("dark");
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const apply = (prefersDark: boolean) => {
+      root.classList.remove("dark", "dark-blue");
+      if (theme === "dark") root.classList.add("dark");
+      else if (theme === "dark-blue") root.classList.add("dark-blue");
+      else if (theme === "system" && prefersDark) root.classList.add("dark");
+    };
+
+    localStorage.setItem("theme", theme);
+    apply(mq.matches);
+
+    if (theme === "system") {
+      const handler = (e: MediaQueryListEvent) => apply(e.matches);
+      mq.addEventListener("change", handler);
+      return () => mq.removeEventListener("change", handler);
     }
   }, [theme]);
 
@@ -50,8 +76,7 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
     const handler = (e: MouseEvent) => {
       if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
         setSettingsOpen(false);
-        setThemeExpanded(false);
-        setLangExpanded(false);
+        setActiveAccordion(null);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -60,8 +85,7 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
 
   const closePopup = () => {
     setSettingsOpen(false);
-    setThemeExpanded(false);
-    setLangExpanded(false);
+    setActiveAccordion(null);
   };
 
   const THEME_OPTIONS: { value: Theme; label: string; icon: React.ReactNode }[] = [
@@ -99,16 +123,18 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
             </div>
           </>
         )}
-        <button
-          onClick={() => setCollapsed((v) => !v)}
-          className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
-            collapsed && "mx-auto",
-          )}
-          aria-label={t(collapsed ? "sidebar.expandSidebar" : "sidebar.collapseSidebar")}
-        >
-          <Menu size={20} />
-        </button>
+        <SidebarTooltip label={t("sidebar.expandSidebar")} show={collapsed}>
+          <button
+            onClick={() => setCollapsed((v) => !v)}
+            className={cn(
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              collapsed && "mx-auto",
+            )}
+            aria-label={t(collapsed ? "sidebar.expandSidebar" : "sidebar.collapseSidebar")}
+          >
+            <Menu size={20} />
+          </button>
+        </SidebarTooltip>
       </div>
 
       {/* Nav */}
@@ -131,33 +157,35 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
 
               return (
                 <div key={item.key}>
-                  <button
-                    onClick={() => {
-                      if (isParent && !collapsed) toggleExpand(item.key as NavItemKey);
-                      onActiveChange(item.key as NavItemKey);
-                    }}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                    )}
-                  >
-                    <Icon
-                      size={18}
-                      className={cn("shrink-0", isActive ? "text-sidebar-accent-foreground" : "text-muted-foreground")}
-                    />
-                    {!collapsed && (
-                      <>
-                        <span className="flex-1 truncate text-left">{t(item.label)}</span>
-                        {isParent && (
-                          isExpanded
-                            ? <ChevronDown size={14} className="shrink-0 text-muted-foreground" />
-                            : <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
-                        )}
-                      </>
-                    )}
-                  </button>
+                  <SidebarTooltip label={t(item.label)} show={collapsed}>
+                    <button
+                      onClick={() => {
+                        if (isParent && !collapsed) toggleExpand(item.key as NavItemKey);
+                        onActiveChange(item.key as NavItemKey);
+                      }}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors",
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                      )}
+                    >
+                      <Icon
+                        size={18}
+                        className={cn("shrink-0", isActive ? "text-sidebar-accent-foreground" : "text-muted-foreground")}
+                      />
+                      {!collapsed && (
+                        <>
+                          <span className="flex-1 truncate text-left">{t(item.label)}</span>
+                          {isParent && (
+                            isExpanded
+                              ? <ChevronDown size={14} className="shrink-0 text-muted-foreground" />
+                              : <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+                          )}
+                        </>
+                      )}
+                    </button>
+                  </SidebarTooltip>
 
                   {isParent && !collapsed && isExpanded && (
                     <div className="ml-4 mt-0.5 border-l border-sidebar-border pl-3">
@@ -201,17 +229,17 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
           )}>
             {/* 主題 */}
             <button
-              onClick={() => { setThemeExpanded((v) => !v); setLangExpanded(false); }}
+              onClick={() => setActiveAccordion((v) => v === "theme" ? null : "theme")}
               className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
               <Sun size={15} className="shrink-0 text-muted-foreground" />
               <span className="flex-1 text-left">{t("sidebar.theme")}</span>
               <ChevronRight
                 size={13}
-                className={cn("shrink-0 text-muted-foreground transition-transform", themeExpanded && "rotate-90")}
+                className={cn("shrink-0 text-muted-foreground transition-transform", activeAccordion === "theme" && "rotate-90")}
               />
             </button>
-            {themeExpanded && (
+            {activeAccordion === "theme" && (
               <div className="border-t border-sidebar-border bg-sidebar-accent/30">
                 {THEME_OPTIONS.map((opt) => (
                   <button
@@ -236,17 +264,17 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
 
             {/* 語言 */}
             <button
-              onClick={() => { setLangExpanded((v) => !v); setThemeExpanded(false); }}
+              onClick={() => setActiveAccordion((v) => v === "lang" ? null : "lang")}
               className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
               <Globe size={15} className="shrink-0 text-muted-foreground" />
               <span className="flex-1 text-left">{t("sidebar.language")}</span>
               <ChevronRight
                 size={13}
-                className={cn("shrink-0 text-muted-foreground transition-transform", langExpanded && "rotate-90")}
+                className={cn("shrink-0 text-muted-foreground transition-transform", activeAccordion === "lang" && "rotate-90")}
               />
             </button>
-            {langExpanded && (
+            {activeAccordion === "lang" && (
               <div className="border-t border-sidebar-border bg-sidebar-accent/30">
                 {LANG_OPTIONS.map((opt) => (
                   <button
@@ -288,17 +316,19 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
               <span className="flex-1 truncate text-sm text-sidebar-foreground/80">{t("sidebar.user")}</span>
             </>
           )}
-          <button
-            onClick={() => { setSettingsOpen((v) => !v); if (settingsOpen) { setThemeExpanded(false); setLangExpanded(false); } }}
-            className={cn(
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
-              collapsed && "mx-auto",
-              settingsOpen && "bg-sidebar-accent text-sidebar-foreground",
-            )}
-            aria-label={t("sidebar.settings")}
-          >
-            <Settings size={16} />
-          </button>
+          <SidebarTooltip label={t("sidebar.settings")} show={collapsed}>
+            <button
+              onClick={() => { setSettingsOpen((v) => !v); if (settingsOpen) setActiveAccordion(null); }}
+              className={cn(
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                collapsed && "mx-auto",
+                settingsOpen && "bg-sidebar-accent text-sidebar-foreground",
+              )}
+              aria-label={t("sidebar.settings")}
+            >
+              <Settings size={16} />
+            </button>
+          </SidebarTooltip>
         </div>
       </div>
     </aside>

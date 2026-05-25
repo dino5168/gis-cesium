@@ -18,6 +18,10 @@ app-front/src-tauri/target/
 .env
 **/.env
 
+# Generated docs artifacts
+app-backend/docs/**/*.pdf
+app-backend/docs/**/mds_to_*.py
+
 # OS
 .DS_Store
 Thumbs.db

@@ -1,0 +1,40 @@
+{
+  "chapters": [
+    {
+      "id": 1,
+      "title": "Settings 與權限精通",
+      "slug": "settings-and-permissions",
+      "description": "從 settings.json 的三層階層、permissions 精細控管，到環境變數與模型切換，建立進階使用者必備的控制基礎。"
+    },
+    {
+      "id": 2,
+      "title": "Slash Commands 與 Skills 客製化",
+      "slug": "slash-commands-and-skills",
+      "description": "撰寫可重用的 slash commands 與 skills，將個人/團隊的工作流封裝為一鍵呼叫的能力模組。"
+    },
+    {
+      "id": 3,
+      "title": "Hooks 事件驅動自動化",
+      "slug": "hooks-automation",
+      "description": "透過 PreToolUse、PostToolUse、UserPromptSubmit、Stop 等 hook 介入 Claude Code 生命週期，將自動行為烙進工作流。"
+    },
+    {
+      "id": 4,
+      "title": "Subagents 子代理協作",
+      "slug": "subagents-collaboration",
+      "description": "設計可組合的子代理系統，掌握工具範圍、isolation 模式與平行 spawn 策略，把大任務拆給專責 agent。"
+    },
+    {
+      "id": 5,
+      "title": "MCP 整合外部工具",
+      "slug": "mcp-integration",
+      "description": "理解 Model Context Protocol 架構，設定與信任 MCP server，連接 GitHub、檔案系統、資料庫等外部能力。"
+    },
+    {
+      "id": 6,
+      "title": "工作流與團隊協作規模化",
+      "slug": "workflows-and-team",
+      "description": "整合 CLAUDE.md、headless mode、CI/CD 與共享設定，將 Claude Code 從個人工具推進到團隊規模的生產力倍增器。"
+    }
+  ]
+}

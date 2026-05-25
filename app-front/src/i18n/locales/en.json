@@ -17,6 +17,7 @@
   },
   "nav": {
     "chat": "AI Chatbot",
+    "docs": "Docs",
     "dashboard": "Dashboard",
     "overview": "Overview",
     "stats": "Statistics"
