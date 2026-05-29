@@ -15,6 +15,14 @@ const FILL    = COLOR.withAlpha(0.15);
 const PREVIEW = COLOR.withAlpha(0.7);
 const W       = 2;
 
+const VERTEX_POINT: Cesium.PointGraphics.ConstructorOptions = {
+  pixelSize:                8,
+  color:                    Cesium.Color.WHITE,
+  outlineColor:             COLOR,
+  outlineWidth:             2,
+  disableDepthTestDistance: Number.POSITIVE_INFINITY,
+};
+
 // ── Label styles ───────────────────────────────────────────────────────────
 
 const LABEL_BASE: Cesium.LabelGraphics.ConstructorOptions = {
@@ -47,6 +55,7 @@ interface MState {
   mousePos:          Cesium.Cartesian3 | null;
   previewEnt:        Cesium.Entity | null;
   segLabels:         Cesium.Entity[];          // live segment labels during drawing
+  vertexMarkers:     Cesium.Entity[];          // temporary node circles during drawing
   committedEntities: Cesium.Entity[];          // all permanent result entities
   handler:           Cesium.ScreenSpaceEventHandler | null;
 }
@@ -57,7 +66,7 @@ export default function MeasureToolbar({ viewer }: { viewer: Cesium.Viewer | nul
   const [activeTool, setActiveTool] = useState<MeasureTool | null>(null);
   const m = useRef<MState>({
     positions: [], mousePos: null,
-    previewEnt: null, segLabels: [], committedEntities: [], handler: null,
+    previewEnt: null, segLabels: [], vertexMarkers: [], committedEntities: [], handler: null,
   });
 
   // Clears only in-progress drawing state
@@ -67,11 +76,13 @@ export default function MeasureToolbar({ viewer }: { viewer: Cesium.Viewer | nul
     if (viewer && !viewer.isDestroyed()) {
       if (st.previewEnt) viewer.entities.remove(st.previewEnt);
       st.segLabels.forEach(e => viewer.entities.remove(e));
+      st.vertexMarkers.forEach(e => viewer.entities.remove(e));
     }
-    st.previewEnt = null;
-    st.segLabels  = [];
-    st.positions  = [];
-    st.mousePos   = null;
+    st.previewEnt    = null;
+    st.segLabels     = [];
+    st.vertexMarkers = [];
+    st.positions     = [];
+    st.mousePos      = null;
   }
 
   // Removes all committed result entities
@@ -120,8 +131,9 @@ export default function MeasureToolbar({ viewer }: { viewer: Cesium.Viewer | nul
       position: pts[pts.length - 1],
       label: { ...SUMMARY_LABEL, text: `總計 ${fmtDist(total)}` },
     });
+    const vertexEnts = pts.map(p => viewer.entities.add({ position: p, point: VERTEX_POINT }));
 
-    m.current.committedEntities.push(lineEnt, ...permLabels, totalEnt);
+    m.current.committedEntities.push(lineEnt, ...permLabels, totalEnt, ...vertexEnts);
     setActiveTool(null);
   }
 
@@ -149,8 +161,9 @@ export default function MeasureToolbar({ viewer }: { viewer: Cesium.Viewer | nul
       position: centroid(pts),
       label:    { ...SUMMARY_LABEL, text: fmtArea(computeArea(pts)), verticalOrigin: Cesium.VerticalOrigin.CENTER },
     });
+    const vertexEnts = pts.map(p => viewer.entities.add({ position: p, point: VERTEX_POINT }));
 
-    m.current.committedEntities.push(polyEnt, labelEnt);
+    m.current.committedEntities.push(polyEnt, labelEnt, ...vertexEnts);
     setActiveTool(null);
   }
 
@@ -176,6 +189,7 @@ export default function MeasureToolbar({ viewer }: { viewer: Cesium.Viewer | nul
         const pos = pickPos(viewer, e.position);
         if (!pos) return;
         if (st.positions.length > 0) addSegLabel(st.positions[st.positions.length - 1], pos);
+        st.vertexMarkers.push(viewer.entities.add({ position: pos, point: VERTEX_POINT }));
         st.positions.push(pos);
 
         if (!st.previewEnt) {
