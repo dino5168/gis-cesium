@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as Cesium from "cesium";
 import { Ruler, Maximize2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { geodesicDist } from "./drawStrategies";
+import { pickPos, geodesicDist, centroid, computeArea, fmtDist, fmtArea } from "@/lib/unimath";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -14,47 +14,6 @@ const COLOR   = Cesium.Color.fromCssColorString("#3b82f6");
 const FILL    = COLOR.withAlpha(0.15);
 const PREVIEW = COLOR.withAlpha(0.7);
 const W       = 2;
-
-// ── Geometry helpers ───────────────────────────────────────────────────────
-
-function pickPos(viewer: Cesium.Viewer, px: Cesium.Cartesian2): Cesium.Cartesian3 | undefined {
-  return viewer.scene.camera.pickEllipsoid(px, viewer.scene.globe.ellipsoid);
-}
-
-function centroid(pts: Cesium.Cartesian3[]): Cesium.Cartesian3 {
-  const c = new Cesium.Cartesian3();
-  pts.forEach(p => Cesium.Cartesian3.add(c, p, c));
-  return Cesium.Cartesian3.multiplyByScalar(c, 1 / pts.length, new Cesium.Cartesian3());
-}
-
-function computeArea(pts: Cesium.Cartesian3[]): number {
-  if (pts.length < 3) return 0;
-  const origin = centroid(pts);
-  const tf  = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
-  const inv = Cesium.Matrix4.inverseTransformation(tf, new Cesium.Matrix4());
-  const p2  = pts.map(p => {
-    const l = Cesium.Matrix4.multiplyByPoint(inv, p, new Cesium.Cartesian3());
-    return { x: l.x, y: l.y };
-  });
-  let area = 0;
-  for (let i = 0; i < p2.length; i++) {
-    const j = (i + 1) % p2.length;
-    area += p2[i].x * p2[j].y - p2[j].x * p2[i].y;
-  }
-  return Math.abs(area) / 2;
-}
-
-// ── Format helpers ─────────────────────────────────────────────────────────
-
-function fmtDist(m: number): string {
-  return m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${m.toFixed(0)} m`;
-}
-
-function fmtArea(m2: number): string {
-  return m2 >= 1_000_000
-    ? `${(m2 / 1_000_000).toFixed(2)} km²`
-    : `${m2.toFixed(2)} m²`;
-}
 
 // ── Label styles ───────────────────────────────────────────────────────────
 

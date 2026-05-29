@@ -1,4 +1,8 @@
 import * as Cesium from "cesium";
+import {
+  pickPos, geodesicDist,
+  toRect, rectCorners, circlePolylinePositions,
+} from "@/lib/unimath";
 
 // ── Public types ───────────────────────────────────────────────────────────
 
@@ -33,58 +37,6 @@ const COLOR   = Cesium.Color.fromCssColorString("#f59e0b");
 const FILL    = COLOR.withAlpha(0.25);
 const PREVIEW = COLOR.withAlpha(0.6);
 const W       = 2;
-
-// ── Pure geometry helpers ──────────────────────────────────────────────────
-
-function pickPos(
-  viewer: Cesium.Viewer,
-  px: Cesium.Cartesian2,
-): Cesium.Cartesian3 | undefined {
-  return viewer.scene.camera.pickEllipsoid(px, viewer.scene.globe.ellipsoid);
-}
-
-export function geodesicDist(a: Cesium.Cartesian3, b: Cesium.Cartesian3): number {
-  const ca = Cesium.Cartographic.fromCartesian(a);
-  const cb = Cesium.Cartographic.fromCartesian(b);
-  return new Cesium.EllipsoidGeodesic(ca, cb).surfaceDistance;
-}
-
-function toRect(p1: Cesium.Cartesian3, p2: Cesium.Cartesian3): Cesium.Rectangle {
-  const c1 = Cesium.Cartographic.fromCartesian(p1);
-  const c2 = Cesium.Cartographic.fromCartesian(p2);
-  return new Cesium.Rectangle(
-    Math.min(c1.longitude, c2.longitude),
-    Math.min(c1.latitude,  c2.latitude),
-    Math.max(c1.longitude, c2.longitude),
-    Math.max(c1.latitude,  c2.latitude),
-  );
-}
-
-/** 以 ENU 局部座標系生成圓形閉合點列（供 polyline 使用） */
-function circlePolylinePositions(center: Cesium.Cartesian3, radius: number, segments = 64): Cesium.Cartesian3[] {
-  const transform = Cesium.Transforms.eastNorthUpToFixedFrame(center);
-  const pts: Cesium.Cartesian3[] = [];
-  for (let i = 0; i <= segments; i++) {
-    const angle = (i / segments) * Cesium.Math.TWO_PI;
-    const local = new Cesium.Cartesian3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
-    pts.push(Cesium.Matrix4.multiplyByPoint(transform, local, new Cesium.Cartesian3()));
-  }
-  return pts;
-}
-
-/** 矩形四個角點，形成閉合迴圈（供 polyline 使用） */
-function rectCorners(p1: Cesium.Cartesian3, p2: Cesium.Cartesian3): Cesium.Cartesian3[] {
-  const c1 = Cesium.Cartographic.fromCartesian(p1);
-  const c2 = Cesium.Cartographic.fromCartesian(p2);
-  const fromRad = Cesium.Cartesian3.fromRadians;
-  return [
-    fromRad(c1.longitude, c1.latitude),
-    fromRad(c2.longitude, c1.latitude),
-    fromRad(c2.longitude, c2.latitude),
-    fromRad(c1.longitude, c2.latitude),
-    fromRad(c1.longitude, c1.latitude), // 閉合
-  ];
-}
 
 // ── Commit helpers (permanent entities) ────────────────────────────────────
 
