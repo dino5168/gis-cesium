@@ -43,7 +43,7 @@ function pickPos(
   return viewer.scene.camera.pickEllipsoid(px, viewer.scene.globe.ellipsoid);
 }
 
-function geodesicDist(a: Cesium.Cartesian3, b: Cesium.Cartesian3): number {
+export function geodesicDist(a: Cesium.Cartesian3, b: Cesium.Cartesian3): number {
   const ca = Cesium.Cartographic.fromCartesian(a);
   const cb = Cesium.Cartographic.fromCartesian(b);
   return new Cesium.EllipsoidGeodesic(ca, cb).surfaceDistance;

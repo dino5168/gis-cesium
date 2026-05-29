@@ -121,7 +121,7 @@ export default function DrawToolbar({ viewer }: { viewer: Cesium.Viewer | null }
   }
 
   return (
-    <div className="absolute left-4 top-36 z-10 flex flex-col gap-2">
+    <div className="flex flex-col gap-2">
       <ToolGroup
         label="線"
         tools={LINE_TOOLS}

@@ -6,7 +6,10 @@ import LayerSwitcher from "@/components/map/LayerSwitcher";
 import ZoomControl from "@/components/map/ZoomControl";
 import ScaleBar from "@/components/map/ScaleBar";
 import DrawToolbar from "@/components/map/DrawToolbar";
+import MeasureToolbar from "@/components/map/MeasureToolbar";
 import CompassWidget from "@/components/map/CompassWidget";
+import MapInfoDrawer from "@/components/map/MapInfoDrawer";
+import CoordDisplay from "@/components/map/CoordDisplay";
 
 export default function DemoCesium() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -71,10 +74,16 @@ export default function DemoCesium() {
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
       <ZoomControl viewer={viewer} />
-      <DrawToolbar viewer={viewer} />
+      {/* Draw + Measure toolbars share the same left column */}
+      <div className="absolute left-4 top-36 z-10 flex flex-col gap-2">
+        <DrawToolbar viewer={viewer} />
+        <MeasureToolbar viewer={viewer} />
+      </div>
       <CompassWidget viewer={viewer} />
+      <MapInfoDrawer viewer={viewer} />
       <LayerSwitcher viewer={viewer} />
       <ScaleBar viewer={viewer} />
+      <CoordDisplay viewer={viewer} />
     </div>
   );
 }
