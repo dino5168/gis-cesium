@@ -26,6 +26,9 @@ app-backend/docs/**/mds_to_*.py
 .DS_Store
 Thumbs.db
 
+# Obsidian pasted screenshots
+Pasted image*.png
+
 # Editor
 .vscode/*
 !.vscode/extensions.json

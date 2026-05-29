@@ -18,6 +18,9 @@
   "nav": {
     "chat": "AI Chatbot",
     "docs": "Docs",
+    "tools": "Tool Call",
+    "textbook": "Textbook",
+    "cesium": "Cesium Map",
     "dashboard": "Dashboard",
     "overview": "Overview",
     "stats": "Statistics"
@@ -25,5 +28,23 @@
   "chat": {
     "empty": "Start a conversation below.",
     "placeholder": "Message… (Enter to send, Shift+Enter for newline)"
+  },
+  "textbook": {
+    "title": "AI Textbook Builder",
+    "labelTopic": "Topic",
+    "placeholderTopic": "e.g. Junior High English Grammar",
+    "labelGrade": "Grade",
+    "labelChapters": "Chapters",
+    "labelPages": "Pages / Chapter",
+    "btnPlan": "Plan Chapters",
+    "btnBack": "Back",
+    "btnGenerate": "Generate Textbook",
+    "btnNew": "New Textbook",
+    "btnView": "View Textbook",
+    "msgPlanning": "AI is planning chapters…",
+    "msgGenerating": "Generating content…",
+    "msgDone": "Textbook Generated!",
+    "errorPlan": "Chapter planning failed",
+    "errorGenerate": "Content generation failed"
   }
 }

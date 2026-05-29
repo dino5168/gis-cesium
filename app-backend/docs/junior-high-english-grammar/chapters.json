@@ -1,0 +1,52 @@
+{
+  "chapters": [
+    {
+      "id": 1,
+      "title": "詞類與基礎單字",
+      "slug": "parts-of-speech-and-vocabulary",
+      "description": "介紹英文的八大詞類，以及如何辨識和使用基礎單字，為後續文法學習打下基礎。"
+    },
+    {
+      "id": 2,
+      "title": "名詞與代名詞的運用",
+      "slug": "nouns-and-pronouns",
+      "description": "深入探討名詞的種類、複數變化，以及代名詞在句子中的正確使用與指代關係。"
+    },
+    {
+      "id": 3,
+      "title": "動詞與時態的掌握",
+      "slug": "verbs-and-tenses",
+      "description": "學習不同時態的構成與用法，掌握現在、過去、未來等基本時態，練習時態的應用。"
+    },
+    {
+      "id": 4,
+      "title": "形容詞與副詞的修飾",
+      "slug": "adjectives-and-adverbs",
+      "description": "學習如何使用形容詞和副詞來精確描述名詞和動詞，理解它們在句子中的位置和功能。"
+    },
+    {
+      "id": 5,
+      "title": "介系詞與連接詞",
+      "slug": "prepositions-and-conjunctions",
+      "description": "學習介系詞在表達時間、地點和方向上的作用，以及連接詞如何將單詞和句子連接起來。"
+    },
+    {
+      "id": 6,
+      "title": "句子結構與類型",
+      "slug": "sentence-structure-and-types",
+      "description": "探討簡單句、複合句的結構，並介紹不同類型的句子（陳述句、疑問句、祈使句）的構成。"
+    },
+    {
+      "id": 7,
+      "title": "語態與被動語態",
+      "slug": "voice-and-voice",
+      "description": "學習主動語態與被動語態的區別與轉換，理解在不同情境下語態的選用。"
+    },
+    {
+      "id": 8,
+      "title": "句型應用與標點符號",
+      "slug": "sentence-application-and-punctuation",
+      "description": "綜合運用所學的文法，練習構成複雜的句子，並掌握正確的標點符號使用。"
+    }
+  ]
+}

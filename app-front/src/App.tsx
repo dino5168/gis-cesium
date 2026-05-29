@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Bot, Minus, Maximize2, Minimize2, X } from "lucide-react";
@@ -6,17 +6,21 @@ import { AppSidebar } from "@/components/sidebar/AppSidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AiChat from "@/pages/AiChat";
 import DocPage from "@/pages/DocPage";
+import ToolChat from "@/pages/ToolChat";
+import TextbookPage from "@/pages/TextbookPage";
+import DemoCesium from "@/pages/DemoCesium";
 import type { NavItemKey } from "@/components/sidebar/nav-config";
-
-const PAGES: Record<NavItemKey, React.ReactNode> = {
-  chat: <AiChat />,
-  docs: <DocPage bookPath="Claude-Code-使用手冊" />,
-};
 
 export default function App() {
   const { t } = useTranslation();
   const [activeItem, setActiveItem] = useState<NavItemKey>("chat");
+  const [docBook, setDocBook] = useState("Claude-Code-使用手冊");
   const [isMaximized, setIsMaximized] = useState(true);
+
+  const openDoc = useCallback((slug: string) => {
+    setDocBook(slug);
+    setActiveItem("docs");
+  }, []);
 
   useEffect(() => {
     const win = getCurrentWindow();
@@ -72,7 +76,11 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar activeItem={activeItem} onActiveChange={setActiveItem} />
         <main className="flex-1 overflow-hidden">
-          {PAGES[activeItem]}
+          {activeItem === "chat"     && <AiChat />}
+          {activeItem === "docs"     && <DocPage bookPath={docBook} />}
+          {activeItem === "tools"    && <ToolChat />}
+          {activeItem === "textbook" && <TextbookPage onOpenDoc={openDoc} />}
+          {activeItem === "cesium"   && <DemoCesium />}
         </main>
       </div>
     </div>

@@ -18,6 +18,9 @@
   "nav": {
     "chat": "AI 聊天機器人",
     "docs": "說明文件",
+    "tools": "工具呼叫",
+    "textbook": "教材生成",
+    "cesium": "Cesium 地圖",
     "dashboard": "儀表板",
     "overview": "概覽",
     "stats": "統計"
@@ -25,5 +28,23 @@
   "chat": {
     "empty": "在下方開始對話。",
     "placeholder": "傳送訊息… (Enter 送出，Shift+Enter 換行)"
+  },
+  "textbook": {
+    "title": "AI 教材生成器",
+    "labelTopic": "教材主題",
+    "placeholderTopic": "例：國中英語文法",
+    "labelGrade": "適用年級",
+    "labelChapters": "章節數",
+    "labelPages": "每章子頁",
+    "btnPlan": "規劃章節",
+    "btnBack": "返回",
+    "btnGenerate": "開始生成",
+    "btnNew": "新教材",
+    "btnView": "查看教材",
+    "msgPlanning": "AI 正在規劃章節…",
+    "msgGenerating": "正在生成內容…",
+    "msgDone": "教材生成完成！",
+    "errorPlan": "章節規劃失敗",
+    "errorGenerate": "內容生成失敗"
   }
 }

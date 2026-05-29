@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import chat, docs
+from app.routers import chat, docs, textbook, tools
 from app.services import ollama as ollama_svc
 
 
@@ -35,6 +35,8 @@ app.add_middleware(
 
 app.include_router(chat.router)
 app.include_router(docs.router)
+app.include_router(tools.router)
+app.include_router(textbook.router)
 
 
 @app.get("/health")
