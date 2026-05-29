@@ -74,18 +74,21 @@ export default function DrawToolbar({ viewer }: { viewer: Cesium.Viewer | null }
     positions: [],
     mousePos: null,
     previewEntity: null,
+    vertexMarkers: [],
     handler: null,
   });
 
   function resetState() {
     const st = s.current;
     if (st.handler) { st.handler.destroy(); st.handler = null; }
-    if (st.previewEntity && viewer && !viewer.isDestroyed()) {
-      viewer.entities.remove(st.previewEntity);
-      st.previewEntity = null;
+    if (viewer && !viewer.isDestroyed()) {
+      if (st.previewEntity) viewer.entities.remove(st.previewEntity);
+      st.vertexMarkers.forEach(e => viewer.entities.remove(e));
     }
-    st.positions = [];
-    st.mousePos  = null;
+    st.previewEntity = null;
+    st.vertexMarkers = [];
+    st.positions     = [];
+    st.mousePos      = null;
   }
 
   useEffect(() => {

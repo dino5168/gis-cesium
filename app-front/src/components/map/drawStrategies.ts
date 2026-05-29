@@ -19,6 +19,7 @@ export interface DrawState {
   positions: Cesium.Cartesian3[];
   mousePos: Cesium.Cartesian3 | null;
   previewEntity: Cesium.Entity | null;
+  vertexMarkers: Cesium.Entity[];   // temporary node circles during drawing
   handler: Cesium.ScreenSpaceEventHandler | null;
 }
 
@@ -38,7 +39,19 @@ const FILL    = COLOR.withAlpha(0.25);
 const PREVIEW = COLOR.withAlpha(0.6);
 const W       = 2;
 
+const VERTEX_POINT: Cesium.PointGraphics.ConstructorOptions = {
+  pixelSize:                8,
+  color:                    Cesium.Color.WHITE,
+  outlineColor:             COLOR,
+  outlineWidth:             2,
+  disableDepthTestDistance: Number.POSITIVE_INFINITY,
+};
+
 // ── Commit helpers (permanent entities) ────────────────────────────────────
+
+function addVertexMarker(viewer: Cesium.Viewer, pos: Cesium.Cartesian3, st: DrawState) {
+  st.vertexMarkers.push(viewer.entities.add({ position: pos, point: VERTEX_POINT }));
+}
 
 function commitLine(viewer: Cesium.Viewer, pts: Cesium.Cartesian3[]) {
   if (pts.length < 2) return;
@@ -50,6 +63,7 @@ function commitLine(viewer: Cesium.Viewer, pts: Cesium.Cartesian3[]) {
       clampToGround: true,
     },
   });
+  pts.forEach(p => viewer.entities.add({ position: p, point: VERTEX_POINT }));
 }
 
 function commitPolygon(viewer: Cesium.Viewer, pts: Cesium.Cartesian3[]) {
@@ -66,6 +80,7 @@ function commitPolygon(viewer: Cesium.Viewer, pts: Cesium.Cartesian3[]) {
       clampToGround: true,
     },
   });
+  pts.forEach(p => viewer.entities.add({ position: p, point: VERTEX_POINT }));
 }
 
 function commitRectangle(viewer: Cesium.Viewer, p1: Cesium.Cartesian3, p2: Cesium.Cartesian3) {
@@ -137,6 +152,7 @@ const lineStrategy: ToolStrategy = {
       (e: Cesium.ScreenSpaceEventHandler.PositionedEvent) => {
         const pos = pickPos(viewer, e.position);
         if (!pos) return;
+        addVertexMarker(viewer, pos, st);
         st.positions.push(pos);
         if (st.positions.length === 2) { commitLine(viewer, st.positions); finish(); }
       },
@@ -163,7 +179,9 @@ const polylineStrategy: ToolStrategy = {
     handler.setInputAction(
       (e: Cesium.ScreenSpaceEventHandler.PositionedEvent) => {
         const pos = pickPos(viewer, e.position);
-        if (pos) st.positions.push(pos);
+        if (!pos) return;
+        addVertexMarker(viewer, pos, st);
+        st.positions.push(pos);
       },
       Cesium.ScreenSpaceEventType.LEFT_CLICK,
     );
@@ -269,7 +287,9 @@ const polygonStrategy: ToolStrategy = {
     handler.setInputAction(
       (e: Cesium.ScreenSpaceEventHandler.PositionedEvent) => {
         const pos = pickPos(viewer, e.position);
-        if (pos) st.positions.push(pos);
+        if (!pos) return;
+        addVertexMarker(viewer, pos, st);
+        st.positions.push(pos);
       },
       Cesium.ScreenSpaceEventType.LEFT_CLICK,
     );
