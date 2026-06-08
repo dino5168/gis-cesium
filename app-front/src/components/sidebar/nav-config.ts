@@ -1,17 +1,19 @@
 import { MessageSquare, LayoutDashboard, LayoutGrid, PieChart, BookOpen, Wrench, BookMarked, Globe } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-export type NavItemKey = "chat" | "docs" | "tools" | "textbook" | "cesium";
+export type NavItemKey =
+  | "chat" | "docs" | "tools" | "textbook" | "cesium"
+  | "dashboard" | "overview" | "stats";
 
 interface LeafNavItem {
-  key: string;
+  key: NavItemKey;
   label: string;
   icon: LucideIcon;
   children?: never;
 }
 
 interface ParentNavItem {
-  key: string;
+  key: NavItemKey;
   label: string;
   icon: LucideIcon;
   children: LeafNavItem[];

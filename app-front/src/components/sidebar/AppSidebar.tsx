@@ -1,10 +1,23 @@
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Menu, ChevronRight, ChevronDown, Settings, User, Sun, Monitor, Moon, Waves, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { NAV_SECTIONS, isParentNavItem } from "./nav-config";
 import type { NavItemKey } from "./nav-config";
+import type { Theme } from "@/hooks/useTheme";
+import { useClickOutside } from "@/hooks/useClickOutside";
+
+type Language = "zh-TW" | "en";
+
+function isLanguage(lang: string): lang is Language {
+  return lang === "zh-TW" || lang === "en";
+}
+
+const LANG_OPTIONS: ReadonlyArray<{ value: Language; label: string }> = [
+  { value: "zh-TW", label: "繁體中文" },
+  { value: "en",    label: "English"  },
+];
 
 function SidebarTooltip({ label, show, children }: {
   label: string;
@@ -22,23 +35,19 @@ function SidebarTooltip({ label, show, children }: {
   );
 }
 
-type Theme = "system" | "light" | "dark" | "dark-blue";
-type Language = "zh-TW" | "en";
-
 interface AppSidebarProps {
   readonly className?: string;
   readonly activeItem: NavItemKey;
   readonly onActiveChange: (key: NavItemKey) => void;
+  readonly theme: Theme;
+  readonly onThemeChange: (theme: Theme) => void;
 }
 
-export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebarProps) {
+export function AppSidebar({ className, activeItem, onActiveChange, theme, onThemeChange }: AppSidebarProps) {
   const { t, i18n } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<NavItemKey>>(new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem("theme") as Theme) ?? "system",
-  );
   const [activeAccordion, setActiveAccordion] = useState<"theme" | "lang" | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
 
@@ -50,43 +59,12 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
     });
   };
 
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-
-    const apply = (prefersDark: boolean) => {
-      root.classList.remove("dark", "dark-blue");
-      if (theme === "dark") root.classList.add("dark");
-      else if (theme === "dark-blue") root.classList.add("dark-blue");
-      else if (theme === "system" && prefersDark) root.classList.add("dark");
-    };
-
-    localStorage.setItem("theme", theme);
-    apply(mq.matches);
-
-    if (theme === "system") {
-      const handler = (e: MediaQueryListEvent) => apply(e.matches);
-      mq.addEventListener("change", handler);
-      return () => mq.removeEventListener("change", handler);
-    }
-  }, [theme]);
-
-  useEffect(() => {
-    if (!settingsOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
-        setSettingsOpen(false);
-        setActiveAccordion(null);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [settingsOpen]);
-
   const closePopup = () => {
     setSettingsOpen(false);
     setActiveAccordion(null);
   };
+
+  useClickOutside(settingsRef, closePopup, settingsOpen);
 
   const THEME_OPTIONS: { value: Theme; label: string; icon: React.ReactNode }[] = [
     { value: "system",    label: t("sidebar.themeSystem"),   icon: <Monitor size={14} /> },
@@ -95,12 +73,7 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
     { value: "dark-blue", label: t("sidebar.themeDarkBlue"), icon: <Waves size={14} /> },
   ];
 
-  const LANG_OPTIONS: { value: Language; label: string }[] = [
-    { value: "zh-TW", label: "繁體中文" },
-    { value: "en",    label: "English"  },
-  ];
-
-  const currentLang = i18n.language as Language;
+  const currentLang: Language = isLanguage(i18n.language) ? i18n.language : "zh-TW";
 
   return (
     <aside
@@ -151,7 +124,7 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
 
             {section.items.map((item) => {
               const isActive = activeItem === item.key;
-              const isExpanded = expandedItems.has(item.key as NavItemKey);
+              const isExpanded = expandedItems.has(item.key);
               const isParent = isParentNavItem(item);
               const Icon = item.icon;
 
@@ -160,8 +133,8 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
                   <SidebarTooltip label={t(item.label)} show={collapsed}>
                     <button
                       onClick={() => {
-                        if (isParent && !collapsed) toggleExpand(item.key as NavItemKey);
-                        onActiveChange(item.key as NavItemKey);
+                        if (isParent && !collapsed) toggleExpand(item.key);
+                        onActiveChange(item.key);
                       }}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors",
@@ -195,7 +168,7 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
                         return (
                           <button
                             key={child.key}
-                            onClick={() => onActiveChange(child.key as NavItemKey)}
+                            onClick={() => onActiveChange(child.key)}
                             className={cn(
                               "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
                               isChildActive
@@ -244,7 +217,7 @@ export function AppSidebar({ className, activeItem, onActiveChange }: AppSidebar
                 {THEME_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
-                    onClick={() => { setTheme(opt.value); closePopup(); }}
+                    onClick={() => { onThemeChange(opt.value); closePopup(); }}
                     className={cn(
                       "flex w-full items-center gap-3 px-5 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
                       theme === opt.value

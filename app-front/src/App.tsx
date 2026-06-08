@@ -10,12 +10,14 @@ import ToolChat from "@/pages/ToolChat";
 import TextbookPage from "@/pages/TextbookPage";
 import DemoCesium from "@/pages/DemoCesium";
 import type { NavItemKey } from "@/components/sidebar/nav-config";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function App() {
   const { t } = useTranslation();
   const [activeItem, setActiveItem] = useState<NavItemKey>("chat");
   const [docBook, setDocBook] = useState("Claude-Code-使用手冊");
   const [isMaximized, setIsMaximized] = useState(true);
+  const { theme, setTheme } = useTheme();
 
   const openDoc = useCallback((slug: string) => {
     setDocBook(slug);
@@ -74,7 +76,12 @@ export default function App() {
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
-        <AppSidebar activeItem={activeItem} onActiveChange={setActiveItem} />
+        <AppSidebar
+            activeItem={activeItem}
+            onActiveChange={setActiveItem}
+            theme={theme}
+            onThemeChange={setTheme}
+          />
         <main className="flex-1 overflow-hidden">
           {activeItem === "chat"     && <AiChat />}
           {activeItem === "docs"     && <DocPage bookPath={docBook} />}
