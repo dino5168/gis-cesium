@@ -2,6 +2,48 @@
 
 Tauri v2 desktop app — React 19 + TypeScript frontend with a local FastAPI backend.
 
+## React + TypeScript Coding Standards
+
+> Full spec: `../Rules/React-TypeScript-V1.md`
+
+### 1. 組件職責
+每個組件只做一件事。複雜邏輯抽進 Custom Hook，組件只呼叫 Hook 並渲染回傳值。Smart/Dumb 分類已過時，不使用。
+
+### 2. TypeScript 型別規則
+- 禁止 `any`，用 `unknown` + type guard
+- 狀態用 Discriminated Union，禁止多個 boolean 旗標
+- Props 只傳需要的欄位，不傳整個物件
+- 優先用 `satisfies` 取代型別斷言
+- 跨函數邊界傳遞 ID 時使用 Branded Types
+
+### 3. 非同步狀態管理
+優先使用 TanStack Query 管理 server state，不用 `useEffect` + `useState` 自行管理。
+
+### 4. 效能最佳化
+`useMemo` / `useCallback` 預設不加，僅在以下情況加：複雜計算且 re-render 頻繁、傳入 `React.memo` 子組件、用於 `useEffect`/`useQuery` dependency array。
+
+### 5. `key` prop
+禁止用陣列 index 作為 `key`，一律使用穩定的業務 ID。
+
+### 6. 組件擴充性
+可複用的原生元件繼承 `React.XxxHTMLAttributes<T>` 並用 `...rest` spread。
+
+### 7. 狀態 Colocation
+單一組件用 `useState`；兄弟共用提升到父層；跨多層用 Context / Zustand；Server state 用 TanStack Query。
+
+### 8. Context
+Context 只注入穩定服務（auth、theme、i18n），不用於高頻更新的狀態。
+
+### 9. Error Boundary
+每個路由層級或獨立功能區塊必須有 Error Boundary（使用 `react-error-boundary`）。
+
+### 10. 錯誤處理
+非同步函數用 `Result<T>` 型別，避免 untyped throw 和散落的 try/catch。
+
+```ts
+type Result<T, E = Error> = { data: T; error: null } | { data: null; error: E };
+```
+
 ## Commands
 
 ```powershell
